@@ -1,0 +1,111 @@
+Да, можно установить две версии OpenSSL на одну систему и переключаться между ними по мере необходимости. Это можно сделать, установив одну версию OpenSSL из пакетов вашей системы (например, OpenSSL 3.0), а другую версию из исходного кода (например, OpenSSL 1.1.0). Далее вы сможете настроить вашу программу (в данном случае, Ruby) для использования конкретной версии OpenSSL.
+
+Вот пошаговое руководство, как это сделать на Ubuntu:
+
+1. **Установите стандартную версию OpenSSL из репозитория Ubuntu:**
+
+   ```sh
+   sudo apt update
+   sudo apt install openssl libssl-dev
+   ```
+
+2. **Скачайте и установите OpenSSL 1.1.0 из исходного кода:**
+
+   ```sh
+   wget https://www.openssl.org/source/openssl-1.1.0l.tar.gz
+   tar -xzf openssl-1.1.0l.tar.gz
+   cd openssl-1.1.0l
+   ./config --prefix=/usr/local/openssl-1.1.0 --openssldir=/usr/local/openssl-1.1.0 shared zlib
+   make
+   sudo make install
+   ```
+
+3. **Создайте скрипт для переключения между версиями OpenSSL:**
+
+   Создайте файл `switch_openssl.sh` с таким содержимым:
+
+   ```sh
+   #!/bin/bash
+
+   if [ "$1" == "1.1.0" ]; then
+       export PATH=/usr/local/openssl-1.1.0/bin:$PATH
+       export LD_LIBRARY_PATH=/usr/local/openssl-1.1.0/lib:$LD_LIBRARY_PATH
+       echo "Switched to OpenSSL 1.1.0"
+   elif [ "$1" == "default" ]; then
+       export PATH=$(echo $PATH | sed -e 's#/usr/local/openssl-1.1.0/bin:##')
+       export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed -e 's#/usr/local/openssl-1.1.0/lib:##')
+       echo "Switched to default OpenSSL"
+   else
+       echo "Usage: source switch_openssl.sh [1.1.0|default]"
+   fi
+   ```
+
+   Сделайте этот файл исполняемым:
+
+   ```sh
+   chmod +x switch_openssl.sh
+   ```
+
+4. **Используйте скрипт для переключения версий OpenSSL:**
+
+   Для использования OpenSSL 1.1.0:
+
+   ```sh
+   source switch_openssl.sh 1.1.0
+   ```
+
+   Для возврата к стандартной версии OpenSSL:
+
+   ```sh
+   source switch_openssl.sh default
+   ```
+
+5. **Запустите Ruby с нужной версией OpenSSL:**
+
+   После переключения на нужную версию OpenSSL, вы можете запустить ваш Ruby-скрипт:
+
+   ```sh
+   ruby test_payload.rb
+   ```
+
+Таким образом, вы сможете легко переключаться между версиями OpenSSL и использовать необходимую вам версию в зависимости от конкретных задач.
+
+
+или без баша
+
+test_payload.rb
+```
+# Определение функции для переключения версий OpenSSL
+def switch_openssl(version)
+  case version
+  when "1.1.0"
+    system("export PATH=/usr/local/openssl-1.1.0/bin:$PATH")
+    system("export LD_LIBRARY_PATH=/usr/local/openssl-1.1.0/lib:$LD_LIBRARY_PATH")
+  when "default"
+    system("export PATH=$(echo $PATH | sed -e 's#/usr/local/openssl-1.1.0/bin:##')")
+    system("export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed -e 's#/usr/local/openssl-1.1.0/lib:##')")
+  else
+    raise "Unsupported OpenSSL version: #{version}"
+  end
+end
+
+# Переключение на нужную версию OpenSSL
+switch_openssl("1.1.0")
+
+# Подключение библиотеки kalkancrypt
+require_relative 'ext/kalkancrypt/kalkancrypt'
+
+# Инициализация библиотеки
+KalkanCrypt.init
+
+# Создание JWS подписи
+payload = "example payload"
+p12_path = "./GOSTKNCA.p12"
+password = "Aa1234"
+jws_signature = KalkanCrypt.create_jws_signature(payload, p12_path, password)
+
+puts "JWS Signature: #{jws_signature}"
+
+# Переключение обратно на стандартную версию OpenSSL (если необходимо)
+switch_openssl("default")
+```

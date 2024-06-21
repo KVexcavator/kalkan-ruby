@@ -1,0 +1,35 @@
+{
+    "extRefNo": "005",
+    "srvId": 141,
+    "amount": 100,
+    "currency": "KZT",
+    "fee": 0,
+    "point": "Sandbox",
+    "accept": 0,
+    "srvParams": [
+        {
+            "code": "iin",
+            "value": "960913350158"
+        },
+        {
+            "code": "account",
+            "value": "KZ39821T2P5L10000001"
+        },
+        {
+            "code": "name",
+            "value": "Аманбаев Асыл Ержанович"
+        },
+        {
+            "code": "knp",
+            "value": "119"
+        },
+        {
+            "code": "code",
+            "value": "19"
+        },
+        {
+            "code": "narrative",
+            "value": "Платёж СБВ"
+        }
+    ]
+}

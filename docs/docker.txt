@@ -1,0 +1,78 @@
+В Linux существует несколько стандартных путей для размещения библиотек. Обычно для системных и пользовательских библиотек используются следующие директории:
+
+- /usr/lib - для системных библиотек.
+- /usr/local/lib - для локально установленных библиотек.
+- /lib - для самых базовых системных библиотек.
+
+В вашем Dockerfile использование /usr/local/lib является правильным выбором для размещения нестандартных библиотек.
+
+### Проверка наличия и установки библиотеки
+
+1. Проверьте, существует ли библиотека в контейнере:
+
+   docker-compose exec ccm_backend bash
+   ls /usr/local/lib | grep libkalkancryptjws.so
+
+
+   Если эта команда ничего не возвращает, библиотека может не находиться в правильной директории или не скопирована.
+
+2. Проверьте правильность переменной `LD_LIBRARY_PATH`:
+
+   docker-compose exec ccm_backend bash
+   echo $LD_LIBRARY_PATH
+
+
+   Убедитесь, что переменная содержит путь /usr/local/lib.
+
+### Пример Dockerfile для установки библиотеки и обновления кэша ldconfig
+
+Вот пример Dockerfile, который гарантирует, что библиотека будет правильно установлена и найдена:
+
+FROM ruby:3.3.1
+
+# Установка зависимостей
+RUN apt-get update -qq && apt-get install -y \
+  nodejs \
+  postgresql-client \
+  pcscd \
+  libpcsclite1 \
+  libpcsclite-dev
+
+# Копирование библиотеки в стандартный путь
+COPY rails-api/lib/kalkancrypt/libkalkancryptjws.so /usr/local/lib/
+
+# Добавление пути к библиотеке в конфигурацию ld.so.conf.d и обновление кэша ldconfig
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/kalkancrypt.conf && ldconfig
+
+WORKDIR /usr/src/app
+
+# Копирование и установка зависимостей приложения
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+ходного кода приложения
+COPY . .
+
+# Экспонирование порта
+EXPOSE 3000
+
+# Команда для запуска сервера Rails
+CMD ["rails", "server", "-b", "0.0.0.0"]
+
+### Пересоздание и перезапуск Docker-контейнеров
+
+После обновления Dockerfile, пересоздайте образы и перезапустите контейнеры:
+
+docker-compose down
+docker-compose build
+docker-compose up
+
+### Проверка доступности библиотеки
+
+Теперь снова проверьте доступность библиотеки:
+
+docker-compose exec ccm_backend bash
+ldconfig -p | grep libkalkancryptjws
+
+Если библиотека установлена и доступна, вы должны увидеть её путь в выводе команды.
+ПУТИ И НАСТРОЙКИ В etc/ld.so.conf.d
